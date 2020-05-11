@@ -16,8 +16,11 @@ const DEFAULT_ALG_H = 'HS256'
  * @param {Number} exp The expiration time in seconds, default value 10min (600seg)
  * @param {String} alg The algorithm used to sign the jwt, default value 'RS256'
  * @param {String} kid The id of the key used to sign this jwt,
+ * @param {boolean} iat Indicates whether ot include iat claim
+ * @param {boolean} nbf Indicates whether ot include nbf claim
+ * @param {boolean} jti Indicates whether ot include jti claim
  */
-function createJws (secret, payload, header, exp, alg, kid) {
+function createJws (secret, payload, header, exp, alg, kid, iat = true, nbf = true, jti = true) {
   valObject(payload, 'payload')
   valObject(header, 'header')
   valNumber(exp, 'exp')
@@ -28,13 +31,17 @@ function createJws (secret, payload, header, exp, alg, kid) {
 
   const jwtHeader = Object.assign(header, { typ: 'JWT', alg, kid })
 
-  const jwtBody = Object.assign(payload,
-    {
-      iat: currentTime - 5,
-      nbf: currentTime - 5,
-      exp: expirationTime,
-      jti: nanoid()
-    })
+  let jwtBody = Object.assign(payload, { exp: expirationTime })
+
+  if (iat) {
+    jwtBody = Object.assign(jwtBody, { iat: currentTime - 5 })
+  }
+  if (nbf) {
+    jwtBody = Object.assign(jwtBody, { nbf: currentTime - 5 })
+  }
+  if (jti) {
+    jwtBody = Object.assign(jwtBody, { jti: nanoid() })
+  }
 
   const sHeader = JSON.stringify(jwtHeader)
   const sPayload = JSON.stringify(jwtBody)
